@@ -22,7 +22,7 @@
 """
 
 def test_func():
-	pass
+	return 1 + 1
 
 import tkinter as tk
 from tkinter import ttk
