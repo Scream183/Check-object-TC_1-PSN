@@ -15,6 +15,11 @@
 
 # In[10]:
 
+"""
+ Powered by Andrew
+ Version 1.0
+ Python 3+
+"""
 
 import tkinter as tk
 from tkinter import ttk
