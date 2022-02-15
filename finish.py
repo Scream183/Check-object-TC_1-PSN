@@ -21,6 +21,9 @@
  Python 3+
 """
 
+def test_func():
+	pass
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
