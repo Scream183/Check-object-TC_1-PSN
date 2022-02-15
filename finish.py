@@ -21,8 +21,10 @@
  Python 3+
 """
 
-def test_func():
-	return 1 + 1
+def test_func(a):
+	if a > 0:
+		return a
+	return -a
 
 import tkinter as tk
 from tkinter import ttk
