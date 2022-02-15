@@ -15,11 +15,6 @@
 
 # In[10]:
 
-"""
- Powered by Andrew
- Version 1.0
- Python 3+
-"""
 
 def test_func(a):
 	if a > 0:
