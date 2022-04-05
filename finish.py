@@ -16,6 +16,7 @@
 # In[10]:
 
 
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
@@ -193,6 +194,11 @@ def file_PSN():
     global filename7
     filename7 = fd.askopenfilename()
     showinfo(title='Выбранный файл', message=filename7)
+   
+def file_ecxn():
+    global filename3
+    filename3 = fd.askopenfilename()
+    showinfo(title='Выбранный файл', message=filename3)
 
 def start_TC_1():
     a = pd.read_excel(filename1, header = 1, dtype = str)
@@ -279,9 +285,14 @@ def start_TC_1():
     s['date_cessation'] = pd.to_datetime(s['DATE_CESSATION_PATENT'], dayfirst = True)
     s['stop_use_day'] = pd.to_datetime(s['DATE_STOP_USE_PATENT'], dayfirst = True)
     
+    ecxn = pd.read_excel(filename3, header = 0, dtype = str)
+    ecxn['date_begin'] = pd.to_datetime(ecxn['ДатаНачЕСХН'], dayfirst = True)
+    ecxn['date_stop'] = pd.to_datetime(ecxn['ДатаКонЕСХН'], dayfirst = True)
+    
     new_col = []
     new_col1 = []
     new_col2 = []
+    new_col3 = []
     for index, row in a.iterrows():
         inn = row['ИНН']
         if len(inn) == 11:
@@ -364,11 +375,23 @@ def start_TC_1():
         result1 = result1[(result1['date_loss'] > go) | result1['date_loss'].isna()] #ищем дату потери, если есть
         result1 = result1[(result1['date_cessation'] > go) | result1['date_cessation'].isna()] #ищем дату прекращения, если есть
         result1 = result1[(result1['stop_use_day'] > go) | result1['stop_use_day'].isna()]
+        
+        result2 = ecxn[ecxn['ИНН'] == inn]
+        result2 = result2[(result2['date_begin'] <= go)]
+        result2 = result2[(result2['date_stop'] >= go) | result2['date_stop'].isna() | ((result2['date_stop'].dt.year == go.year) & (result2['date_stop'].dt.quarter == go.quarter))]
+        result2['date_begin'] = result2['date_begin'].dt.strftime('%d.%m.%Y')
+        
         if len(result1) != 0:
             new_col2.append("Да")
             new_col1.append('c ' + result1['DATE_START_PATENT'].values[-1] +' по '+ result1['DATE_STOP_PATENT'].values[-1])
         else:
             new_col2.append("Нет")
+            
+        if len(result2) != 0:
+            new_col3.append('Да')
+            new_col1.append('c '+ result2['date_begin'].values[-1])
+        else:
+            new_col3.append('Нет')
 
 
         if len(result) != 0 or len(okt) != 0:
@@ -389,16 +412,20 @@ def start_TC_1():
                 pass
             else:
                 new_col1.append(' ')
+        
+       
 
 
 
     a['Уведомление'] = new_col #cоздаем колонку в "а" и присваиваем рузульты списка new_col
     a['Патент'] = new_col2
+    a['ЕСХН'] = new_col3
     a['Комментарий'] = new_col1
     cols = list(a)
     cols.insert(1, cols.pop(cols.index('Уведомление')))
     cols.insert(2, cols.pop(cols.index('Патент')))
-    cols.insert(3, cols.pop(cols.index('Комментарий')))
+    cols.insert(3, cols.pop(cols.index('ЕСХН')))
+    cols.insert(4, cols.pop(cols.index('Комментарий')))
     a = a.loc[:, cols]
     a.to_excel(y)
     
@@ -409,6 +436,9 @@ open_button = ttk.Button(root, text='Загрузить Excel файл "Выгр
 open_button.pack(expand=True)
 
 open_button = ttk.Button(root, text='Загрузить Excel файл "Выгрузка по ПСН"', command=file_PSN)
+open_button.pack(expand=True)
+
+open_button = ttk.Button(root, text='Загрузить Excel файл "Выгрузка по ЕСХН"', command=file_ecxn)
 open_button.pack(expand=True)
 
 open_button1 = ttk.Button(root, text='START', command=lambda:[start_TC_1()])
