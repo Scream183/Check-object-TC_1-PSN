@@ -23,6 +23,7 @@ from tkinter import filedialog as fd
 from tkinter.messagebox import showinfo
 import pandas as pd
 from datetime import datetime
+import re
 
 root = tk.Tk()
 root.title('Проверка на уведомления и патенты')
@@ -41,143 +42,190 @@ def has_type_street(adres):
             return True
     return False
 
-def clean_house(r):
-    for v in r:
-        if v.upper() in ",/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ":
-            r = r.replace(v,"").strip()
-    return r
+def has_type_street1(adres):
+    type_street = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\type_street_list.csv", index_col = 0, dtype = str)
+    for index, row in type_street.iterrows():
+        if row[0] in adres:
+            return row[0]
+    return False
+    
+    
+def clean_house(house):
+    result = re.search(r'\d+', house)
+    return result.group(0)
 
 def street_in_Mkad(row):
-    replace_list = [['Тысяча Девятьсот', '1905'], ['Десятилетия', '10'], ['10-летия', '10'], ['Восьмисотлетия', '800'], ['800-летия', '800'], ['Двадцати Шести', '26'], ['26-ти', '26'], ['Тысяча Восемьсот', '1812'], ['1 Мая', '1'], ['Сорок', '40'], ['Пятьдесят', '50'], ['60-летия', '60'], ['Шестидесятилетия', '60'], ['Восьмого', '8'], ['Девятого', '9']]
-    replace_list2 = [[',',""], ['/','']]
-    addr = row['Адрес ТО'] #ищем улицу
-    for p in replace_list:
+    
+    #convert street
+    addr = row['Адрес ТО']#ищем улицу
+    nto = row['Тип ТО']
+    idd = row['Системный идентификатор объекта']
+    kind_of_object = row['Вид объекта']
+    placement_scheme = row['Схема размещения НТО']
+    street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
+    street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
+    for p in street_with_number:
         addr = addr.replace(p[0], p[1])
-    street = addr.split(',')[1]
-    _p = street.split(' ')
-    if 'квартал 113А' in addr or 'квартал 114А' in addr:
-        g = 'ВОЛЖСКИЙ'
-    elif 'МКАД' in addr:
-        g = 'МКАД'
-    elif not has_type_street(addr):
-        g = _p[1].upper()
+    if has_type_street1(addr):
+        type_street = has_type_street1(addr) # find type street, if type street contains addr
+        index_street = addr.find(type_street) #find index type street in addr
+        street = addr[index_street:].split(' ')[1].strip(',')
+    elif 'МКАД' in addr.upper():
+        street = 'МКАД'
     else:
-        g = _p[2].upper()
-    nto = row['Тип ТО']
-    if addr.find('дом') == -1 and nto == 'Стационарные торговые объекты': # ищем дом
-        r = addr.split(',')[2].strip()
-    elif nto == 'Нестационарные торговые объекты':
-        r = None
-    elif addr.find('дом') > 0:
-        house = addr.find('дом') + 4
-        r = addr[house:house+2].strip()
-        if r.isdigit() == False:
-            r = clean_house(r)
-    if 'Волжский' in addr:
-        r = None
-    building = None 
-    status = row['Статус для целей обложения ТС']
-    if 'Недостоверные' in status:
-        nc = status
-    else:
-        nc = None
-    oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты':
-        oktmo = OKTMO(oktmo)
-    return g, r, building, nc, oktmo
-def street_zelenog(row):
-    state = row['Административный округ']
-    state_list1 = ['ЗелАО']
-    addr = row['Адрес ТО'] #ищем улицу
-    if (state in state_list1) and ('Зеленоград' in addr) and (not 'корпус' in addr):
-        street = addr.split(',')[2]
-        _p = street.split(' ')
-        t = _p[2].upper()
-    elif 'ж.д.' in addr:
-        street = addr.split(',')[2]
-        _p = street.split(' ')
-        t = _p[0].upper()
-    elif (state in state_list1) and (not 'Зеленоград' in addr):
-        street = addr.split(',')[1]
-        _p = street.split(' ')
-        t = _p[2].upper()
-    else:
-        t = None
-    nto = row['Тип ТО']
-    house = addr.find('дом') # ищем дом
-    if house == -1 or nto == 'Нестационарные торговые объекты':
-        v = None
-    else:
-        house = addr.find('дом')+4 
-        v = addr[house:house+2]
-        if v.isdigit() == False:
-            v = clean_house(v)
-    building = addr.find('корпус')
-    if building == -1 or house > 0: #ищем корпус
-        h = None 
-    else:
-        building = addr.find('корпус')+7
-        h = addr[building:building+4]
-        if h.isdigit() == False:
-            h = clean_house(h)
-    status = row['Статус для целей обложения ТС']
-    if 'Недостоверные' in status:
-        nc = status
-    else:
-        nc = None
-    oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты':
-        oktmo = OKTMO(oktmo)
-            
-    return t, v, h, nc, oktmo #возвращаем улицу, дом, корпус
-def street_new_moscow(row):
-    addr = row['Адрес ТО']
-    state = row['Административный округ']
-    street = addr.split(',')[1]
-    street2 = addr.split(',')[2]
-    if has_type_street(street):
-        _p = street.split(' ')
-        g = _p[2].upper()
-        if 'Киевское' in addr and  'Московский' in addr:
-            g = 'КИЕВСКОЕ'
-        elif 'Калужское' in addr:
-            g = 'КАЛУЖСКОЕ'
-    elif has_type_street(street2):
-        _p = street2.split(' ')
-        g = _p[2].upper()
-        if 'Калужское' in addr:
-            g = 'КАЛУЖСКОЕ'
-        elif 'Киевское' in addr:
-            g = 'КИЕВСКОЕ'
-        elif ('1-й Микрорайон' in addr and 'Московский' in addr): #or ('микрорайон 1-й' in addr and 'Московский' in addr) :
-            g = '1'
-    elif 'Микрорайон' in street2: #or 'микрорайон' in street2:
-        g = 'МИКРОРАЙОН'
-    elif 'Киевское' in addr and  'Московский' in addr:
-        g = 'КИЕВСКОЕ'
-    elif not has_type_street(addr):
-        g = None
-        if 'МКАД' in addr:
-            g = 'МКАД'
-    street = addr.find('дом')
-    nto = row['Тип ТО']
-    if street == -1 or nto == 'Нестационарные торговые объекты':
+        street = None
+        
+        
+    #convert house
+    index_house = addr.find('дом')
+    if index_house == -1:
+        house = None
+    elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
+        house = None
+    elif kind_of_object == 'Вендинговый автомат' and (placement_scheme == 'Метрополитен' or placement_scheme =='ДТиУ'):
         house = None
     else:
-        street = addr.find('дом')+4
-        house = addr[street:street+4]
-        if house.isdigit() == False:
-            house = clean_house(house)
+        addr1 = addr[index_house:].split(' ')
+        house = addr1[1].strip(',')
+        house = clean_house(house)    
+    
+
+
+    #convert building
     building = None
+    
+    #convert status BP
     status = row['Статус для целей обложения ТС']
     if 'Недостоверные' in status:
         nc = status
     else:
         nc = None
+    
+    #convert octmo
     oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты':
+    if nto == 'Нестационарные торговые объекты' or (street == None and house == None):
         oktmo = OKTMO(oktmo)
-    return g, house, building, nc, oktmo
+    else:
+        oktmo = None
+    
+    return street, house, building, nc, oktmo
+               
+
+      
+
+def street_zelenog(row):
+    addr = row['Адрес ТО']#ищем улицу
+    nto = row['Тип ТО']
+    idd = row['Системный идентификатор объекта']
+    index_building = addr.find('корпус')
+    
+    
+    #convert building
+    if index_building > 0:
+        building = addr[index_building:].split(' ')[1].strip(',')
+        if len(building) > 3:
+            building = clean_house(building)
+    else:
+        building = None
+        
+    #convert street if has
+    if building == None:
+        if has_type_street1(addr):
+            type_street = has_type_street1(addr) # find type street, if type street contains addr
+            index_street = addr.find(type_street) #find index type street in addr
+            street = addr[index_street:].split(' ')[1].strip(',')
+            if len(street) <= 2:
+                street = None
+        else:
+            street = None
+    else:
+        street = None
+        
+    #convert house
+    if building == None:
+        index_house = addr.find('дом')
+        if index_house > 0:
+            house = addr[index_house:].split(' ')[1].strip(',')
+            house = clean_house(house)
+        else:
+            house = None
+    else:
+        house = None
+        
+    #convert status BP
+    status = row['Статус для целей обложения ТС']
+    if 'Недостоверные' in status:
+        nc = status
+    else:
+        nc = None
+    
+    #convert octmo
+    oktmo = row['Муниципальный район']
+    if nto == 'Нестационарные торговые объекты' or (street == None and house == None and building == None):
+        oktmo = OKTMO(oktmo)
+    else:
+        oktmo = None
+
+    return street, house, building, nc, oktmo    
+
+    
+
+def street_new_moscow(row):
+    
+    #convert street
+    addr = row['Адрес ТО']
+    idd = row['Системный идентификатор объекта']
+    nto = row['Тип ТО']
+    kind_of_object = row['Вид объекта']
+    placement_scheme = row['Схема размещения НТО']
+    if has_type_street1(addr):
+        type_street = has_type_street1(addr) # find type street, if type street contains addr
+        index_street = addr.find(type_street) #find index type street in addr
+        addr1 = addr[index_street:] # cut addr from type street to ...
+        street = addr1.split(' ')[1].strip(',')
+        if 'км' in addr:
+            addr2 = addr[:addr.find('км')].strip().split() #street befor 'шоссе' 
+            street = addr2[-3]
+            if 'шоссе' in street:
+                street = addr1.split(' ')[1]    
+        if len(street) < 5:
+            street = None
+    elif 'МКАД' in addr:
+        street = 'МКАД'
+    else:
+        street = None
+        
+    #convert house  
+    index_house = addr.find('дом')
+    if index_house == -1:
+        house = None
+    elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
+        house = None
+    elif kind_of_object == 'Вендинговый автомат' and (placement_scheme == 'Метрополитен' or placement_scheme =='ДТиУ'):
+        house = None
+    else:
+        addr1 = addr[index_house:].split(' ')
+        house = addr1[1].strip(',')
+        house = clean_house(house)   
+    
+    #convert building
+    building = None
+    
+    #convert status BP
+    status = row['Статус для целей обложения ТС']
+    if 'Недостоверные' in status:
+        nc = status
+    else:
+        nc = None
+    
+    #convert octmo
+    oktmo = row['Муниципальный район']
+    if nto == 'Нестационарные торговые объекты' or (street == None and house == None):
+        oktmo = OKTMO(oktmo)
+    else:
+        oktmo = None
+        
+    return street, house, building, nc, oktmo
 
 def file_AIC_OPN():
     global filename1
@@ -254,7 +302,7 @@ def start_TC_1():
     b['Улица'] = t
     street = []
     for index, row in b.iterrows():
-    	addr = str(row['Улица']) + str(row['C_ADMINISTRATIVE_DISTRICT']) + str(row['C_ROOM']) + str(row['C_CITY']) + str(row['C_LOCALITY']) + str(row['C_REGION'])+ str(row['C_HOUSE']) + str(row['C_BUILDING'])
+    	addr = str(row['Улица']) + '--'+ str(row['C_ADMINISTRATIVE_DISTRICT']) + '--' + str(row['C_ROOM'])+ '--' + str(row['C_CITY'])+ '--' + str(row['C_LOCALITY'])+ '--' + str(row['C_REGION'])+ '--'+ str(row['C_HOUSE'])+ '--' + str(row['C_BUILDING'])
     	street.append(addr)
     b['Улица'] = street
     b['Улица'] = b['Улица'].str.upper() #замена маленьких букв на большие
