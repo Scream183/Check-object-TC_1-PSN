@@ -283,7 +283,7 @@ def start_TC_1():
     a['nc'] = c4
     a['oktmo'] = c5
     a['obxod'] = pd.to_datetime(a['Дата последнего обхода/АБО'],dayfirst = True) #переформатируем столбец из строки в дату
-    a['street'] = a['street'].str.replace('Ё', 'Е') #замена букв в улицах
+    a['street'] = a['street'].str.replace('Ё', 'Е').str.upper() #замена букв в улицах
     a['total'] = a['Сумма сбора, руб.'].str.replace(' ', '')
     y = filename1.strip('/')[:-5]+'_проверено на уведомления и патенты'+'.xlsx'
     
