@@ -24,12 +24,13 @@ from tkinter.messagebox import showinfo
 import pandas as pd
 from datetime import datetime
 import re
+from sqlalchemy import create_engine
+
 
 root = tk.Tk()
 root.title('Проверка на уведомления и патенты')
 root.resizable(False, False)
 root.geometry('500x200')
-
 
 def OKTMO(oktmo):
     op = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\OKTMO.csv", index_col = 0, dtype = str).rename(columns={'0':'region_name','1':'kod'}).set_index('region_name')
@@ -234,19 +235,11 @@ def file_AIC_OPN():
     
 
 def file_ТС_1():
-    global filename2
-    filename2 = fd.askopenfilename()
-    showinfo(title='Выбранный файл', message=filename2)
+    with open('Z:\ТС\Сбор информации\Сотрудники\Андрей Ю\python\lists\login_pass_ip.txt', encoding='utf-8') as file:
+        a = file.readlines()
+    conn = create_engine(f"mysql+pymysql://{a[0].strip()}:{a[1].strip()}@{a[2].strip()}/yusupov_av")
+    return conn
 
-def file_PSN():
-    global filename7
-    filename7 = fd.askopenfilename()
-    showinfo(title='Выбранный файл', message=filename7)
-   
-def file_ecxn():
-    global filename3
-    filename3 = fd.askopenfilename()
-    showinfo(title='Выбранный файл', message=filename3)
 
 def start_TC_1():
     a = pd.read_excel(filename1, header = 1, dtype = str)
@@ -286,24 +279,24 @@ def start_TC_1():
     a['street'] = a['street'].str.replace('Ё', 'Е').str.upper() #замена букв в улицах
     a['total'] = a['Сумма сбора, руб.'].str.replace(' ', '')
     y = filename1.strip('/')[:-5]+'_проверено на уведомления и патенты'+'.xlsx'
-    
-    
-    b = pd.read_excel(filename2, header = 0, dtype = str)
+
+
+    b = pd.read_sql("SELECT `C_INN`, `C_OBJECT_TYPE`, `C_OBJECT_ID`, `C_MARK_NOTICE`, `C_TRADE_KIND`, `C_STREET`, `C_ADMINISTRATIVE_DISTRICT`, `C_ROOM`, `C_CITY`, `C_LOCALITY`, `C_REGION`, `C_HOUSE`, `C_BUILDING`, `C_IGNORING_TYPE`, `ACT_NUMBER`, `C_STOP_USING_DATE`, `C_USE_OBJECT_EMERGENCE_DATE`, `C_QUARTER_FEE`    from `tc_1`", con=file_ТС_1())
     t = []
     street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
     street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
     for index, row in b.iterrows():
-    	addr = row['C_STREET']
-    	for p in street_with_number:
+        addr = row['C_STREET']
+        for p in street_with_number:
             if not pd.isna(addr):      
-            	addr = addr.replace(p[0], p[1])
-    	t.append(addr)
-	
+                addr = addr.replace(p[0], p[1])
+        t.append(addr)
+
     b['Улица'] = t
     street = []
     for index, row in b.iterrows():
-    	addr = str(row['Улица']) + '--'+ str(row['C_ADMINISTRATIVE_DISTRICT']) + '--' + str(row['C_ROOM'])+ '--' + str(row['C_CITY'])+ '--' + str(row['C_LOCALITY'])+ '--' + str(row['C_REGION'])+ '--'+ str(row['C_HOUSE'])+ '--' + str(row['C_BUILDING'])
-    	street.append(addr)
+        addr = str(row['Улица']) + '--'+ str(row['C_ADMINISTRATIVE_DISTRICT']) + '--' + str(row['C_ROOM'])+ '--' + str(row['C_CITY'])+ '--' + str(row['C_LOCALITY'])+ '--' + str(row['C_REGION'])+ '--'+ str(row['C_HOUSE'])+ '--' + str(row['C_BUILDING'])
+        street.append(addr)
     b['Улица'] = street
     b['Улица'] = b['Улица'].str.upper() #замена маленьких букв на большие
     b['Улица'] = b['Улица'].str.replace('Ё', 'Е') #замена букв в улицах
@@ -312,30 +305,25 @@ def start_TC_1():
     b['date_stop'] = pd.to_datetime(b['C_STOP_USING_DATE'],dayfirst = True) #переформатируем столбец дата прекращения из строки в дату
     b['date_begin'] = pd.to_datetime(b['C_USE_OBJECT_EMERGENCE_DATE'], format='%d.%m.%Y', errors='coerce') #переформатируем столбец дата возникновения из строки в дату
     b = b[~b['date_begin'].isna()] # ~ работает как not"""
-    
-    s = pd.read_excel(filename7, header = 0, dtype = str)
+
+
+    s = pd.read_sql("SELECT `INN`, `STREET`, `DATE_STOP_PATENT`, `DATE_START_PATENT`, `DATE_LOSS_PATENT`, `DATE_CESSATION_PATENT`, `DATE_STOP_USE_PATENT`, `HOUSE`, `KORP` FROM PSN WHERE DATE_START_PATENT > '2021-12-31'", con=file_ТС_1())
     street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
     street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
     t_psn = []
     replace_list1 = [['Тысяча Девятьсот', '1905'], ['Десятилетия', '10'], ['10-летия', '10'], ['Восьмисотлетия', '800'], ['800-летия', '800'], ['Двадцати Шести', '26'], ['26-ти', '26'], ['Тысяча Восемьсот', '1812'], ['1 Мая', '1'], ['Сорок', '40'], ['Пятьдесят', '50'], ['60-летия', '60'], ['Шестидесятилетия', '60'], ['Восьмого', '8'], ['Девятого', '9']]
     for index, row in s.iterrows():
-    	addr = row['STREET']
-    	for p in street_with_number:
+        addr = row['STREET']
+        for p in street_with_number:
             if not pd.isna(addr):      
-            	addr = addr.replace(p[0], p[1])
-    	t_psn.append(addr)
+                addr = addr.replace(p[0], p[1])
+        t_psn.append(addr)
     s['Улица'] = t_psn
     s['Улица'] = s['Улица'].str.upper() #замена маленьких букв на большие
     s['Улица'] = s['Улица'].str.replace('Ё', 'Е') #замена букв в улицах
-    s['date_finish'] = pd.to_datetime(s['DATE_STOP_PATENT'],dayfirst = True) #переформатируем столбец дата прекращения из строки в дату
-    s['date_begin'] = pd.to_datetime(s['DATE_START_PATENT'],dayfirst = True)
-    s['date_loss'] = pd.to_datetime(s['DATE_LOSS_PATENT'], dayfirst = True)
-    s['date_cessation'] = pd.to_datetime(s['DATE_CESSATION_PATENT'], dayfirst = True)
-    s['stop_use_day'] = pd.to_datetime(s['DATE_STOP_USE_PATENT'], dayfirst = True)
-    
-    ecxn = pd.read_excel(filename3, header = 0, dtype = str)
-    ecxn['date_begin'] = pd.to_datetime(ecxn['ДатаНачЕСХН'], dayfirst = True)
-    ecxn['date_stop'] = pd.to_datetime(ecxn['ДатаКонЕСХН'], dayfirst = True)
+
+
+    ecxn = pd.read_sql("SELECT `ИНН`, `ДатаНачЕСХН`, `ДатаКонЕСХН` FROM ESHN", con=file_ТС_1())
     
     new_col = []
     new_col1 = []
@@ -353,8 +341,6 @@ def start_TC_1():
         status = row['nc']
         kind_obct = row['Вид объекта']
         type_obct = row['Тип ТО']
-        total = row['total']
-        total = str(int(total) - 1000)
         oktmo = row['oktmo']
         result = b[b['C_INN'] == inn]
         if street == None:
@@ -376,9 +362,9 @@ def start_TC_1():
             if len(result) > 1:
                 result = result[result['C_MARK_NOTICE'].str.contains('2', na = False)].iloc[-1]
                 result = pd.DataFrame([result])
-                result = result[result['C_QUARTER_FEE'] >= total]
-            else:
-                result = result[result['C_QUARTER_FEE'] >= total]
+               #result = result[result['C_QUARTER_FEE'] >= total]
+            #else:
+               # result = result[result['C_QUARTER_FEE'] >= total]
         result = result[(result['date_begin'] <= go) | ((result['date_begin'].dt.year == go.year) & (result['date_begin'].dt.quarter == go.quarter))] #смотрим, подходит ли дата возникновения объекта под обход
         result = result[(result['date_stop'] >= go) | result['date_stop'].isna() | ((result['date_stop'].dt.year == go.year) & (result['date_stop'].dt.quarter == go.quarter))] #смотрим, подходит ли дата снятия объекта под обход, если снятия нет то False
         result = result[result['ANNULEMENT'].isna()] #если есть анулированные уведомления, то False
@@ -418,33 +404,32 @@ def start_TC_1():
             pass
         else:
             result1 = result1[result1['KORP'].str.contains(building, na = False)]
-        result1 = result1[(result1['date_begin'] <= go)]  #смотрим, подходит ли дата начала ТД объекта под обход
-        result1 = result1[(result1['date_finish'] >= go)] #смотрим, подходит ли дата дата прекращения ТД под обход, если снятия нет то False
-        result1 = result1[(result1['date_loss'] > go) | result1['date_loss'].isna()] #ищем дату потери, если есть
-        result1 = result1[(result1['date_cessation'] > go) | result1['date_cessation'].isna()] #ищем дату прекращения, если есть
-        result1 = result1[(result1['stop_use_day'] > go) | result1['stop_use_day'].isna()]
-        
+        result1 = result1[(result1['DATE_START_PATENT'] <= go)]  #смотрим, подходит ли дата начала ТД объекта под обход
+        result1 = result1[(result1['DATE_STOP_PATENT'] >= go)] #смотрим, подходит ли дата дата прекращения ТД под обход, если снятия нет то False
+        result1 = result1[(result1['DATE_LOSS_PATENT'] > go) | result1['DATE_LOSS_PATENT'].isna()] #ищем дату потери, если есть
+        result1 = result1[(result1['DATE_CESSATION_PATENT'] > go) | result1['DATE_CESSATION_PATENT'].isna()] #ищем дату прекращения, если есть
+        result1 = result1[(result1['DATE_STOP_USE_PATENT'] > go) | result1['DATE_STOP_USE_PATENT'].isna()]
+
         result2 = ecxn[ecxn['ИНН'] == inn]
-        result2 = result2[(result2['date_begin'] <= go)]
-        result2 = result2[(result2['date_stop'] >= go) | result2['date_stop'].isna() | ((result2['date_stop'].dt.year == go.year) & (result2['date_stop'].dt.quarter == go.quarter))]
-        result2['date_begin'] = result2['date_begin'].dt.strftime('%d.%m.%Y')
-        
+        result2 = result2[(result2['ДатаНачЕСХН'] <= go)]
+        result2 = result2[(result2['ДатаКонЕСХН'] >= go) | result2['ДатаКонЕСХН'].isna()]
+
         if len(result1) != 0:
             new_col2.append("Да")
+            result1['DATE_START_PATENT'].values[-1] = str(result1['DATE_START_PATENT'].values[-1])
+            result1['DATE_STOP_PATENT'].values[-1] = str(result1['DATE_STOP_PATENT'].values[-1])
             new_col1.append('c ' + result1['DATE_START_PATENT'].values[-1] +' по '+ result1['DATE_STOP_PATENT'].values[-1])
         else:
-            new_col2.append("Нет")
-            
-        if len(result2) != 0:
-            new_col3.append('Да')
-            new_col1.append('c '+ result2['date_begin'].values[-1])
-        else:
-            new_col3.append('Нет')
+            new_col2.append("Нет") 
 
+        if len(result2) != 0:
+            new_col3.append("Да")
+        else:
+            new_col3.append("Нет")
 
         if len(result) != 0 or len(okt) != 0:
-            print(inn, street,house,building)
-            print(result[['C_USE_OBJECT_EMERGENCE_DATE', 'C_STOP_USING_DATE']].rename({'C_USE_OBJECT_EMERGENCE_DATE':'ДатаВозникн','C_STOP_USING_DATE':'ДатаПрекр' }, axis='columns'))
+            #print(inn, street,house,building)
+            #print(result[['C_USE_OBJECT_EMERGENCE_DATE', 'C_STOP_USING_DATE']].rename({'C_USE_OBJECT_EMERGENCE_DATE':'ДатаВозникн','C_STOP_USING_DATE':'ДатаПрекр' }, axis='columns'))
             new_col.append('Есть уведомление')
             if new_col2[-1] == 'Да':
                 continue
@@ -460,8 +445,7 @@ def start_TC_1():
                 pass
             else:
                 new_col1.append(' ')
-        
-       
+
 
 
 
@@ -477,17 +461,13 @@ def start_TC_1():
     a = a.loc[:, cols]
     a.to_excel(y)
     
+
 open_button = ttk.Button(root, text='Загрузить Excel файл "Список проверяемых объектов"', command=file_AIC_OPN)
 open_button.pack(expand=True)
 
-open_button = ttk.Button(root, text='Загрузить Excel файл "Выгрузка по уведомлениям ТС"', command=file_ТС_1)
+open_button = ttk.Button(root, text= "Подключится к базе данных", command=file_ТС_1)
 open_button.pack(expand=True)
 
-open_button = ttk.Button(root, text='Загрузить Excel файл "Выгрузка по ПСН"', command=file_PSN)
-open_button.pack(expand=True)
-
-open_button = ttk.Button(root, text='Загрузить Excel файл "Выгрузка по ЕСХН"', command=file_ecxn)
-open_button.pack(expand=True)
 
 open_button1 = ttk.Button(root, text='START', command=lambda:[start_TC_1()])
 open_button1.pack(expand=True)
@@ -496,11 +476,4 @@ open_button1.pack(expand=True)
 
 root.mainloop()
 
-   
-
-
 # In[ ]:
-
-
-
-
