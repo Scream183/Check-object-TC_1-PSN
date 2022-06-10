@@ -281,7 +281,7 @@ def start_TC_1():
     y = filename1.strip('/')[:-5]+'_проверено на уведомления и патенты'+'.xlsx'
 
 
-    b = pd.read_sql("SELECT `C_INN`, `C_OBJECT_TYPE`, `C_OBJECT_ID`, `C_MARK_NOTICE`, `C_TRADE_KIND`, `C_STREET`, `C_ADMINISTRATIVE_DISTRICT`, `C_ROOM`, `C_CITY`, `C_LOCALITY`, `C_REGION`, `C_HOUSE`, `C_BUILDING`, `C_IGNORING_TYPE`, `ACT_NUMBER`, `C_STOP_USING_DATE`, `C_USE_OBJECT_EMERGENCE_DATE`, `C_QUARTER_FEE`    from `tc_1`", con=file_ТС_1())
+    b = pd.read_sql("SELECT `C_INN`, `C_OBJECT_TYPE`, `C_OBJECT_ID`, `C_MARK_NOTICE`, `C_TRADE_KIND`, `C_STREET`, `C_ADMINISTRATIVE_DISTRICT`, `C_ROOM`,`C_OKTMO`, `C_CITY`, `C_LOCALITY`, `C_REGION`, `C_HOUSE`, `C_BUILDING`, `C_IGNORING_TYPE`, `ACT_NUMBER`, `C_STOP_USING_DATE`, `C_USE_OBJECT_EMERGENCE_DATE`, `C_QUARTER_FEE`    from `tc_1`", con=file_ТС_1())
     t = []
     street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
     street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
