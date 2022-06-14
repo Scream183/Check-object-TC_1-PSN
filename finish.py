@@ -78,7 +78,7 @@ def street_in_Mkad(row):
         
         
     #convert house
-    index_house = addr.find('дом')
+    index_house = addr.find('дом ')
     if index_house == -1:
         house = None
     elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
@@ -144,7 +144,7 @@ def street_zelenog(row):
         
     #convert house
     if building == None:
-        index_house = addr.find('дом')
+        index_house = addr.find('дом ')
         if index_house > 0:
             house = addr[index_house:].split(' ')[1].strip(',')
             house = clean_house(house)
@@ -197,7 +197,7 @@ def street_new_moscow(row):
         street = None
         
     #convert house  
-    index_house = addr.find('дом')
+    index_house = addr.find('дом ')
     if index_house == -1:
         house = None
     elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
