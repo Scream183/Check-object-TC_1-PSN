@@ -59,7 +59,8 @@ def street_in_Mkad(row):
     
     #convert street
     addr = row['Адрес ТО']#ищем улицу
-    nto = row['Тип ТО']
+    type_TO = row['Тип ТО']
+    square_shop = str(row['Площадь ТО, м2'])
     idd = row['Системный идентификатор объекта']
     kind_of_object = row['Вид объекта']
     placement_scheme = row['Схема размещения НТО']
@@ -81,7 +82,7 @@ def street_in_Mkad(row):
     index_house = addr.find('дом ')
     if index_house == -1:
         house = None
-    elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
+    elif type_TO == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
         house = None
     elif kind_of_object == 'Вендинговый автомат' and (placement_scheme == 'Метрополитен' or placement_scheme =='ДТиУ'):
         house = None
@@ -104,19 +105,27 @@ def street_in_Mkad(row):
     
     #convert octmo
     oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты' or (street == None and house == None):
+    if type_TO == 'Нестационарные торговые объекты' or (street == None and house == None):
         oktmo = OKTMO(oktmo)
     else:
         oktmo = None
-    
-    return street, house, building, nc, oktmo
+        
+    if type_TO == 'Нестационарные торговые объекты':
+        type_to = '2'
+    elif square_shop == 'nan' and type_TO != 'Нестационарные торговые объекты':
+        type_to = '1'
+    else:
+        type_to = '3'
+        
+    return street, house, building, nc, oktmo, type_to
                
 
       
 
 def street_zelenog(row):
     addr = row['Адрес ТО']#ищем улицу
-    nto = row['Тип ТО']
+    type_TO = row['Тип ТО']
+    square_shop = str(row['Площадь ТО, м2'])
     idd = row['Системный идентификатор объекта']
     index_building = addr.find('корпус')
     
@@ -162,12 +171,19 @@ def street_zelenog(row):
     
     #convert octmo
     oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты' or (street == None and house == None and building == None):
+    if type_TO == 'Нестационарные торговые объекты' or (street == None and house == None and building == None):
         oktmo = OKTMO(oktmo)
     else:
         oktmo = None
+        
+    if type_TO == 'Нестационарные торговые объекты':
+        type_to = '2'
+    elif square_shop == 'nan' and type_TO != 'Нестационарные торговые объекты':
+        type_to = '1'
+    else:
+        type_to = '3'
 
-    return street, house, building, nc, oktmo    
+    return street, house, building, nc, oktmo, type_to    
 
     
 
@@ -176,7 +192,8 @@ def street_new_moscow(row):
     #convert street
     addr = row['Адрес ТО']
     idd = row['Системный идентификатор объекта']
-    nto = row['Тип ТО']
+    type_TO = row['Тип ТО']
+    square_shop = str(row['Площадь ТО, м2'])
     kind_of_object = row['Вид объекта']
     placement_scheme = row['Схема размещения НТО']
     if has_type_street1(addr):
@@ -200,7 +217,7 @@ def street_new_moscow(row):
     index_house = addr.find('дом ')
     if index_house == -1:
         house = None
-    elif nto == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
+    elif type_TO == 'Нестационарные торговые объекты' and kind_of_object != 'Вендинговый автомат':
         house = None
     elif kind_of_object == 'Вендинговый автомат' and (placement_scheme == 'Метрополитен' or placement_scheme =='ДТиУ'):
         house = None
@@ -221,12 +238,19 @@ def street_new_moscow(row):
     
     #convert octmo
     oktmo = row['Муниципальный район']
-    if nto == 'Нестационарные торговые объекты' or (street == None and house == None):
+    if type_TO == 'Нестационарные торговые объекты' or (street == None and house == None):
         oktmo = OKTMO(oktmo)
     else:
         oktmo = None
         
-    return street, house, building, nc, oktmo
+    if type_TO == 'Нестационарные торговые объекты':
+        type_to = '2'
+    elif square_shop == 'nan' and type_TO != 'Нестационарные торговые объекты':
+        type_to = '1'
+    else:
+        type_to = '3'
+        
+    return street, house, building, nc, oktmo, type_to
 
 def file_AIC_OPN():
     global filename1
@@ -246,7 +270,7 @@ def start_TC_1():
     state_list1 = ['ЗелАО']
     state_list2 = ['ТАО', 'НАО']
     state_list3 = ['ЦАО', 'САО', 'СВАО', 'ВАО', 'ЮВАО', 'ЮАО', 'ЮЗАО', 'ЗАО', 'СЗАО']
-    c1,c2,c3,c4,c5 = [], [], [], [], []
+    c1,c2,c3,c4,c5,c6 = [], [], [], [], [],[]
     for index, row in a.iterrows():
         state = row['Административный округ']
         if state in state_list3:
@@ -256,6 +280,7 @@ def start_TC_1():
             c3.append(f[2])
             c4.append(f[3])
             c5.append(f[4])
+            c6.append(f[5])
         if state in state_list1:
             g = street_zelenog(row)
             c1.append(g[0])
@@ -263,6 +288,7 @@ def start_TC_1():
             c3.append(g[2])
             c4.append(g[3])
             c5.append(g[4])
+            c6.append(g[5])
         if state in state_list2:
             v = street_new_moscow(row)
             c1.append(v[0])
@@ -270,18 +296,20 @@ def start_TC_1():
             c3.append(v[2])
             c4.append(v[3])
             c5.append(v[4])
+            c6.append(v[5])
     a['street'] = c1
     a['house'] = c2
     a['building'] = c3
     a['nc'] = c4
     a['oktmo'] = c5
+    a['type_to'] = c6
     a['obxod'] = pd.to_datetime(a['Дата последнего обхода/АБО'],dayfirst = True) #переформатируем столбец из строки в дату
     a['street'] = a['street'].str.replace('Ё', 'Е').str.upper() #замена букв в улицах
     a['total'] = a['Сумма сбора, руб.'].str.replace(' ', '')
     y = filename1.strip('/')[:-5]+'_проверено на уведомления и патенты'+'.xlsx'
 
 
-    b = pd.read_sql("SELECT `C_INN`, `C_OBJECT_TYPE`, `C_OBJECT_ID`, `C_MARK_NOTICE`, `C_TRADE_KIND`, `C_STREET`, `C_ADMINISTRATIVE_DISTRICT`, `C_ROOM`,`C_OKTMO`, `C_CITY`, `C_LOCALITY`, `C_REGION`, `C_HOUSE`, `C_BUILDING`, `C_IGNORING_TYPE`, `ACT_NUMBER`, `C_STOP_USING_DATE`, `C_USE_OBJECT_EMERGENCE_DATE`, `C_QUARTER_FEE`    from `tc_1`", con=file_ТС_1())
+    b = pd.read_sql("SELECT `C_INN`, `C_OBJECT_TYPE`, `C_OBJECT_ID`, `C_MARK_NOTICE`, `C_TRADE_KIND`, `C_STREET`, `C_ADMINISTRATIVE_DISTRICT`, `C_ROOM`, `C_OKTMO`, `C_CITY`, `C_LOCALITY`, `C_REGION`, `C_HOUSE`, `C_BUILDING`, `C_IGNORING_TYPE`, `ACT_NUMBER`, `C_STOP_USING_DATE`, `C_USE_OBJECT_EMERGENCE_DATE`, `C_QUARTER_FEE`,`C_OBJECT_ID`, `C_OBJECT_ID` as `index`    from `tc_1`", con=file_ТС_1())
     t = []
     street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
     street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
@@ -305,9 +333,10 @@ def start_TC_1():
     b['date_stop'] = pd.to_datetime(b['C_STOP_USING_DATE'],dayfirst = True) #переформатируем столбец дата прекращения из строки в дату
     b['date_begin'] = pd.to_datetime(b['C_USE_OBJECT_EMERGENCE_DATE'], format='%d.%m.%Y', errors='coerce') #переформатируем столбец дата возникновения из строки в дату
     b = b[~b['date_begin'].isna()] # ~ работает как not"""
+    b = b.set_index('index')
 
 
-    s = pd.read_sql("SELECT `INN`, `STREET`, `DATE_STOP_PATENT`, `DATE_START_PATENT`, `DATE_LOSS_PATENT`, `DATE_CESSATION_PATENT`, `DATE_STOP_USE_PATENT`, `HOUSE`, `KORP` FROM PSN WHERE DATE_START_PATENT > '2021-12-31'", con=file_ТС_1())
+    s = pd.read_sql("SELECT `index`, `INN`, `STREET`, `DATE_STOP_PATENT`, `DATE_START_PATENT`, `DATE_LOSS_PATENT`, `DATE_CESSATION_PATENT`, `DATE_STOP_USE_PATENT`, `HOUSE`, `KORP` FROM PSN WHERE DATE_START_PATENT > '2021-12-31'", con=file_ТС_1())
     street_with_number = pd.read_csv("Z:\\ТС\\Сбор информации\\Сотрудники\\Андрей Ю\\python\\lists\\street_with_number.csv")
     street_with_number = [[street_with_number.loc[i][1], str(street_with_number.loc[i][2])] for i in range(len(street_with_number))]
     t_psn = []
@@ -321,6 +350,7 @@ def start_TC_1():
     s['Улица'] = t_psn
     s['Улица'] = s['Улица'].str.upper() #замена маленьких букв на большие
     s['Улица'] = s['Улица'].str.replace('Ё', 'Е') #замена букв в улицах
+    s = s.set_index('index')
 
 
     ecxn = pd.read_sql("SELECT `ИНН`, `ДатаНачЕСХН`, `ДатаКонЕСХН` FROM ESHN", con=file_ТС_1())
@@ -341,7 +371,10 @@ def start_TC_1():
         status = row['nc']
         kind_obct = row['Вид объекта']
         type_obct = row['Тип ТО']
+        total = row['total']
+        total = str(int(total) - 1000)
         oktmo = row['oktmo']
+        type_to = row['type_to']
         result = b[b['C_INN'] == inn]
         if street == None:
             pass
@@ -355,40 +388,44 @@ def start_TC_1():
             pass
         else:
             result = result[result['C_BUILDING'].str.contains(building, na = False)]
+
         if status == None:
-            result = result[result['C_MARK_NOTICE'].str.contains('1', na = False)]
+            itog = result[result['C_MARK_NOTICE']=='2']
+            if len(itog) == 0:
+                itog = result[result['C_MARK_NOTICE']=='1']
         else:
-            result = result[result['C_MARK_NOTICE'].str.contains('2', na = False)]
-            if len(result) > 1:
-                result = result[result['C_MARK_NOTICE'].str.contains('2', na = False)].iloc[-1]
-                result = pd.DataFrame([result])
-               #result = result[result['C_QUARTER_FEE'] >= total]
-            #else:
-               # result = result[result['C_QUARTER_FEE'] >= total]
-        result = result[(result['date_begin'] <= go) | ((result['date_begin'].dt.year == go.year) & (result['date_begin'].dt.quarter == go.quarter))] #смотрим, подходит ли дата возникновения объекта под обход
-        result = result[(result['date_stop'] >= go) | result['date_stop'].isna() | ((result['date_stop'].dt.year == go.year) & (result['date_stop'].dt.quarter == go.quarter))] #смотрим, подходит ли дата снятия объекта под обход, если снятия нет то False
-        result = result[result['ANNULEMENT'].isna()] #если есть анулированные уведомления, то False
+            itog = result[result['C_MARK_NOTICE']=='2']
+            itog = itog[itog['C_TRADE_KIND'].str.contains(type_to, na = False)]
+            if len(itog) == 0:
+                itog = result[result['C_MARK_NOTICE']=='1']
+                itog = itog[itog['C_TRADE_KIND'].str.contains(type_to, na = False)]
+
+        itog = itog[(itog['date_begin'] <= go) | ((itog['date_begin'].dt.year == go.year) & (itog['date_begin'].dt.quarter == go.quarter))] #смотрим, подходит ли дата возникновения объекта под обход
+        itog = itog[(itog['date_stop'] >= go) | itog['date_stop'].isna() | ((itog['date_stop'].dt.year == go.year) & (itog['date_stop'].dt.quarter == go.quarter))] #смотрим, подходит ли дата снятия объекта под обход, если снятия нет то False
+        itog = itog[itog['ANNULEMENT'].isna()] #если есть анулированные уведомления, то False
 
 
-
-        if len(result) == 0 and kind_obct != "Вендинговый автомат" and status == None and type_obct == "Нестационарные торговые объекты":
+        #If not street, building, house - we are finding in oktmo
+        if len(itog) == 0 and kind_obct != "Вендинговый автомат" and status == None and type_obct == "Нестационарные торговые объекты":
             okt = b[b['C_INN'] == inn]
             okt = okt[okt["C_OKTMO"] == oktmo]
+
             if status == None:
-                okt = okt[okt['C_MARK_NOTICE'].str.contains('1', na = False)]
+                result_oktmo = okt[okt['C_MARK_NOTICE']=='2']
+                if len(result_oktmo) == 0:
+                    result_oktmo = okt[okt['C_MARK_NOTICE']=='1']
             else:
-                okt = okt[okt['C_MARK_NOTICE'].str.contains('2', na = False)]
-                if len(okt) > 1:
-                    okt = okt[okt['C_MARK_NOTICE'].str.contains('2', na = False)].iloc[-1]
-                    okt = pd.DataFrame([okt])
-                    okt = okt[okt['C_QUARTER_FEE'] >= total]
-                else:
-                    okt = okt[okt['C_QUARTER_FEE'] >= total]
-            okt = okt[(okt['date_begin'] <= go) | ((okt['date_begin'].dt.year == go.year) & (okt['date_begin'].dt.quarter == go.quarter))] #смотрим, подходит ли дата возникновения объекта под обход
-            okt = okt[(okt['date_stop'] >= go) | okt['date_stop'].isna() | ((okt['date_stop'].dt.year == go.year) & (okt['date_stop'].dt.quarter == go.quarter))] #смотрим, подходит ли дата снятия объекта под обход, если снятия нет то False
-            okt = okt[okt['ANNULEMENT'].isna()] #если есть анулированные уведомления, то False
+                result_oktmo = okt[okt['C_MARK_NOTICE']=='2']
+                result_oktmo = result_oktmo[result_oktmo['C_TRADE_KIND'].str.contains(type_to, na = False)]
+                if len(result_oktmo) == 0:
+                    result_oktmo = okt[okt['C_MARK_NOTICE']=='1']
+                    result_oktmo = result_oktmo[result_oktmo['C_TRADE_KIND'].str.contains(type_to, na = False)]
+
+            result_oktmo = result_oktmo[(result_oktmo['date_begin'] <= go) | ((result_oktmo['date_begin'].dt.year == go.year) & (result_oktmo['date_begin'].dt.quarter == go.quarter))] #смотрим, подходит ли дата возникновения объекта под обход
+            result_oktmo = result_oktmo[(result_oktmo['date_stop'] >= go) | result_oktmo['date_stop'].isna() | ((result_oktmo['date_stop'].dt.year == go.year) & (result_oktmo['date_stop'].dt.quarter == go.quarter))] #смотрим, подходит ли дата снятия объекта под обход, если снятия нет то False
+            result_oktmo = result_oktmo[result_oktmo['ANNULEMENT'].isna()] #если есть анулированные уведомления, то False
         else:
-            okt = []
+            result_oktmo = []
 
 
         result1 = s[s['INN'] == inn]
@@ -427,15 +464,17 @@ def start_TC_1():
         else:
             new_col3.append("Нет")
 
-        if len(result) != 0 or len(okt) != 0:
-            #print(inn, street,house,building)
-            #print(result[['C_USE_OBJECT_EMERGENCE_DATE', 'C_STOP_USING_DATE']].rename({'C_USE_OBJECT_EMERGENCE_DATE':'ДатаВозникн','C_STOP_USING_DATE':'ДатаПрекр' }, axis='columns'))
+
+        if len(itog) != 0 or len(result_oktmo) != 0:
+            print(inn, street,house,building)
+            print(itog[['C_USE_OBJECT_EMERGENCE_DATE', 'C_STOP_USING_DATE']].rename({'C_USE_OBJECT_EMERGENCE_DATE':'ДатаВозникн','C_STOP_USING_DATE':'ДатаПрекр' }, axis='columns'))
             new_col.append('Есть уведомление')
+
             if new_col2[-1] == 'Да':
                 continue
             else:
-                if len(okt) == 0:
-                    x = result['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
+                if len(result_oktmo) == 0:
+                    x = itog['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
                 else:
                     x = okt['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
                 new_col1.append('Действует с '+x)
@@ -445,6 +484,15 @@ def start_TC_1():
                 pass
             else:
                 new_col1.append(' ')
+
+        if len(itog) != 0:
+            b = b.drop(itog.index[-1])
+        if len(result_oktmo) != 0:
+            b = b.drop(result_oktmo.index[-1])
+        if len(result1) != 0:
+            s = s.drop(result1.index[-1])
+        else:
+            pass
 
 
 
@@ -459,7 +507,7 @@ def start_TC_1():
     cols.insert(3, cols.pop(cols.index('ЕСХН')))
     cols.insert(4, cols.pop(cols.index('Комментарий')))
     a = a.loc[:, cols]
-    a.to_excel(y)
+    a.to_excel(y, index=False)
     
 
 open_button = ttk.Button(root, text='Загрузить Excel файл "Список проверяемых объектов"', command=file_AIC_OPN)
