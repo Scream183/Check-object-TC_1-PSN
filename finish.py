@@ -476,7 +476,7 @@ def start_TC_1():
                 if len(result_oktmo) == 0:
                     x = itog['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
                 else:
-                    x = okt['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
+                    x = result_oktmo['C_USE_OBJECT_EMERGENCE_DATE'].values[-1]
                 new_col1.append('Действует с '+x)
         else:
             new_col.append('Нет уведомления')
